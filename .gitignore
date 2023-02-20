@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+flutter_vpn.iml
 
 # IntelliJ related
 *.iml

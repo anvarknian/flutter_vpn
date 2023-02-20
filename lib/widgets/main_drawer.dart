@@ -10,22 +10,22 @@ class MainDrawer extends StatelessWidget {
         children: <Widget>[
           UserAccountsDrawerHeader(
             accountName: Text(
-              "test",
+              "Account",
               style: TextStyle(color: Colors.white),
             ),
             accountEmail: Text(
-              "test",
+              "Anwar Knyane",
               style: TextStyle(color: Colors.white),
             ),
           ),
           new ListTile(
             onTap: () { },
             title: Text(
-              "Test",
+              "Connection",
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16.0),
             ),
             leading: Icon(
-              Icons.dashboard,
+              Icons.play_arrow_rounded,
               color: Colors.red,
             ),
           )

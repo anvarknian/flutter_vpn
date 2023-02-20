@@ -23,10 +23,12 @@ class _MainPageState extends State<MainPage> {
   var state = FlutterVpnState.disconnected;
 
   final List<Server> _allServers = Server.allServers();
+  static Server _selectedServer;
 
   @override
   void initState() {
     super.initState();
+    _selectedServer = _allServers[0];
     FlutterVpn.prepare();
     FlutterVpn.onStateChanged.listen((s) {
       if (s == FlutterVpnState.connected) {
@@ -46,22 +48,63 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
-  void connectVpn() {
+  void connectVpn(Server s) {
     if (state == FlutterVpnState.connected) {
       FlutterVpn.disconnect();
     } else {
-      FlutterVpn.simpleConnect(
-          "35.229.109.225.sslip.io", "tensai", "tensai321@");
+      try {
+        FlutterVpn.simpleConnect(s.ip, s.username, s.password);
+        print("CONNECTED TO: $s");
+      } catch (e) {
+        print("Caught an exception: $e");
+      }
     }
-    print("connect");
   }
 
-  void changeServer() {
-    
+  void changeServer(Server selectedServer) {
+    setState(() {
+      _selectedServer = selectedServer;
+    });
   }
 
   void _showModalBottomSheet(BuildContext context) {
-    
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 300,
+          child: ListView.builder(
+            itemCount: _allServers.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                leading: Image.asset(
+                  _allServers[index].flag,
+                  width: 24.0,
+                  height: 24.0,
+                ),
+                trailing: _allServers[index].premium == true ? Icon(
+                        Icons.attach_money, color: Colors.amber,
+                      )
+                    : Icon(
+                        Icons.money_off, color: Colors.grey,
+                      ),
+                title: Text(
+                  _allServers[index].country,
+                ),
+                onTap: () {
+                  // Do something with selected server
+                  print(
+                      "CHANGING FROM: ${_selectedServer} TO: ${_allServers[index]}");
+                  changeServer(_allServers[index]);
+                  print("CHANGED TO: ${_allServers[index]}");
+                  Navigator.pop(context);
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Widget serverConnection(context) {
@@ -88,7 +131,7 @@ class _MainPageState extends State<MainPage> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/performance.png'),
+                  image: AssetImage(_selectedServer.flag),
                   // ...
                 ),
                 // ...
@@ -97,7 +140,7 @@ class _MainPageState extends State<MainPage> {
           ),
           SizedBox(width: screenAwareSize(10.0, context)),
           Text(
-            "Fastest Server",
+            "${_selectedServer.country} ",
             style: TextStyle(
                 color: Colors.white, fontFamily: "Montserrat-SemiBold"),
           ),
@@ -110,7 +153,6 @@ class _MainPageState extends State<MainPage> {
 
   Widget buildUi(BuildContext context) {
     if (state == FlutterVpnState.connected) {
-      //bağlı
       return Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -134,7 +176,9 @@ class _MainPageState extends State<MainPage> {
                 child: FloatingActionButton(
                   elevation: 0,
                   backgroundColor: Colors.green,
-                  onPressed: connectVpn,
+                  onPressed: () {
+                    connectVpn(_selectedServer);
+                  },
                   child: new Icon(Icons.power_settings_new,
                       size: screenAwareSize(150.0, context)),
                 ),
@@ -156,7 +200,6 @@ class _MainPageState extends State<MainPage> {
         ],
       );
     } else if (state == FlutterVpnState.connecting) {
-      // bağlanıyor
       return Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -169,16 +212,16 @@ class _MainPageState extends State<MainPage> {
                 duration: Duration(seconds: 2),
                 repeats: 0,
                 builder: (anim) => FadeTransition(
-                      opacity: anim,
-                      child: Text(
-                        "CONNECTING",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: "Montserrat-SemiBold",
-                            fontSize: 20.0),
-                      ),
-                    ),
+                  opacity: anim,
+                  child: Text(
+                    "CONNECTING",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Montserrat-SemiBold",
+                        fontSize: 20.0),
+                  ),
+                ),
               ),
               SizedBox(height: screenAwareSize(35.0, context)),
               SpinKitRipple(
@@ -201,8 +244,8 @@ class _MainPageState extends State<MainPage> {
           ))
         ],
       );
-    } else {
-      // bağlı değil
+    } else if (state == FlutterVpnState.disconnected ||
+        state == FlutterVpnState.genericError) {
       return Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -226,7 +269,9 @@ class _MainPageState extends State<MainPage> {
                 child: FloatingActionButton(
                   elevation: 0,
                   backgroundColor: Colors.white,
-                  onPressed: connectVpn,
+                  onPressed: () {
+                    connectVpn(_selectedServer);
+                  },
                   child: new Icon(Icons.power_settings_new,
                       color: Colors.green,
                       size: screenAwareSize(150.0, context)),
